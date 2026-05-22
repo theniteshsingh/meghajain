@@ -12,6 +12,15 @@ const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 20);
 onScroll();
 window.addEventListener('scroll', onScroll, { passive: true });
 
+// Mobile quick actions appear after hero CTAs have scrolled away.
+const mobileQuick = document.querySelector('.mobile-quick');
+const onQuickScroll = () => {
+  if (!mobileQuick) return;
+  mobileQuick.classList.toggle('visible', window.scrollY > 420);
+};
+onQuickScroll();
+window.addEventListener('scroll', onQuickScroll, { passive: true });
+
 // Mobile menu toggle
 const toggle = document.querySelector('.nav-toggle');
 toggle?.addEventListener('click', () => {
@@ -19,7 +28,10 @@ toggle?.addEventListener('click', () => {
   toggle.setAttribute('aria-expanded', String(open));
 });
 document.querySelectorAll('.nav-links a').forEach(a =>
-  a.addEventListener('click', () => nav.classList.remove('open'))
+  a.addEventListener('click', () => {
+    nav.classList.remove('open');
+    toggle?.setAttribute('aria-expanded', 'false');
+  })
 );
 
 // Reveal on scroll
@@ -32,6 +44,32 @@ const io = new IntersectionObserver(entries => {
   });
 }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// Active nav section
+(function () {
+  const links = Array.from(document.querySelectorAll('.nav-links a[href^="#"]'));
+  const sections = links
+    .map(link => document.querySelector(link.getAttribute('href')))
+    .filter(Boolean);
+  if (!links.length || !sections.length) return;
+
+  const setActive = (id) => {
+    links.forEach(link => {
+      const active = link.getAttribute('href') === `#${id}`;
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'true');
+      else link.removeAttribute('aria-current');
+    });
+  };
+
+  const sectionObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) setActive(entry.target.id);
+    });
+  }, { rootMargin: '-35% 0px -55% 0px', threshold: 0.01 });
+
+  sections.forEach(section => sectionObserver.observe(section));
+})();
 
 // Custom cursor (desktop only)
 (function () {
